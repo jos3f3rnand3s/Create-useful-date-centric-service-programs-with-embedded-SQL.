@@ -1,0 +1,219 @@
+     H DFTACTGRP(*NO) ACTGRP(*NEW)
+     H INDENT('.') OPTION(*NODEBUGIO: *SRCSTMT) DATFMT(*ISO)
+     H Text('SQL Dates - Tom Snyder, MCPressOnline.com')
+      ******************************************************************
+      * How To Compile:
+      * 1) Create the Program
+      *     CRTSQLRPGI OBJ(MyLib/MCP048RPG) SRCFILE(MyLib/MySrc)
+      *     COMMIT(*NONE) DBGVIEW(*SOURCE)
+      *
+      * Program Description:
+      *   Demonstrate different SQL date functionality
+      *       Using the sysibm.sysdummy1 table.
+      *
+      * Source URL: http://www.MCPressOnline.com
+      * Author URL: http://www.Code-Gorilla.com
+      ******************************************************************
+     D today           S               D
+     D future          S               D
+     D dayDiff         S              4S 0
+     D thisYear        S              4S 0
+     D thisMonth       S              2S 0
+     D thisDay         S              2S 0
+     D thisWOY         S              2S 0
+     D thisDOY         S              3S 0
+     D thisDOW         S              1S 0
+     D thisDayName     S             20A
+     D thisMonthName   S             20A
+     D thisDateName    S             40A
+     D displayBytes    S             52A
+     D* Prototypes
+     D getDateWOY...
+     D                 PR             2S 0
+     D   argDate                       D   const
+     D*
+     D getDateDOY...
+     D                 PR             3S 0
+     D   argDate                       D   const
+     D*
+     D getDateDOW...
+     D                 PR             1S 0
+     D   argDate                       D   const
+     D*
+     D getDateDayName...
+     D                 PR            20A
+     D   argDate                       D   const
+     D*
+     D getDateMonthName...
+     D                 PR            20A
+     D   argDate                       D   const
+     D*
+     D getDateLongName...
+     D                 PR            40A
+     D   argDate                       D   const
+      /free
+       // today = %date();
+       today = %date('2012-01-18');
+       displayBytes = 'Today is: ' + %char(today);
+       dsply displayBytes;
+
+       thisYear = %subdt(today: *YEARS);
+       thisMonth = %subdt(today: *MONTHS);
+       thisDay = %subdt(today: *DAYS);
+       displayBytes = 'Y: ' + %char(thisYear)
+                   + ' M: ' + %char(thisMonth)
+                   + ' D: ' + %char(thisDay);
+       dsply displayBytes;
+
+       future = %date('2012-07-01');
+       dayDiff = %diff(future: today: *DAYS);
+       displayBytes = 'Number of Days to July: '
+                    + %char(dayDiff);
+       dsply displayBytes;
+
+
+       thisWOY = getDateWOY(today);
+       displayBytes = 'The current week of the year is: '
+                    + %char(thisWOY);
+       dsply displayBytes;
+
+       thisDOY = getDateDOY(today);
+       displayBytes = 'The current day of the year is: '
+                    + %char(thisDOY);
+       dsply displayBytes;
+
+       thisDOW = getDateDOW(today);
+       displayBytes = 'The current day of the week is: '
+                    + %char(thisDOW);
+       dsply displayBytes;
+
+       thisDayName = getDateDayName(today);
+       displayBytes = 'The current day name is: '
+                    + %trim(thisDayName);
+       dsply displayBytes;
+
+       thisMonthName = getDateMonthName(today);
+       displayBytes = 'The current Month Name is: '
+                    + %trim(thisMonthName);
+       dsply displayBytes;
+
+       thisDateName = getDateLongName(today);
+       displayBytes = 'The current Date is: '
+                    + %trim(thisDateName);
+       dsply displayBytes;
+       *inlr = *ON;
+      /end-free
+      *-----------------------------------------------------------------
+      * getDateWOY: Gets the Week of the Year for a Specified Date
+      *-----------------------------------------------------------------
+     P getDateWOY...
+     P                 B                   EXPORT
+     D getDateWOY...
+     D                 PI             2S 0
+     D   argDate                       D   const
+     D svWoy           s              2S 0
+      /free
+        svWoy = *ZEROS;
+        exec sql select week(:argDate)
+             into :svWoy
+             from SYSIBM/SYSDUMMY1;
+        return svWoy;
+      /end-free
+     P                 E
+      *-----------------------------------------------------------------
+      * getDateDOY: Gets the Day of the Year for a Specified Date
+      *-----------------------------------------------------------------
+     P getDateDOY...
+     P                 B                   EXPORT
+     D getDateDOY...
+     D                 PI             3S 0
+     D   argDate                       D   const
+     D svReturn        s              3S 0
+      /free
+        svReturn = *ZEROS;
+        exec sql select dayOfYear(:argDate)
+             into :svReturn
+             from SYSIBM/SYSDUMMY1;
+        return svReturn;
+      /end-free
+     P                 E
+      *-----------------------------------------------------------------
+      * getDateDOW: Gets the Day of the Week for a Specified Date
+      *-----------------------------------------------------------------
+     P getDateDOW...
+     P                 B                   EXPORT
+     D getDateDOW...
+     D                 PI             1S 0
+     D   argDate                       D   const
+     D svReturn        s              1S 0
+      /free
+        svReturn = *ZEROS;
+        exec sql select dayOfWeek(:argDate)
+             into :svReturn
+             from SYSIBM/SYSDUMMY1;
+        return svReturn;
+      /end-free
+     P                 E
+      *-----------------------------------------------------------------
+      * getDateDayName: Gets the Day Name for a Specified Date
+      *-----------------------------------------------------------------
+     P getDateDayName...
+     P                 B                   EXPORT
+     D getDateDayName...
+     D                 PI            20A
+     D   argDate                       D   const
+     D svReturn        s             20A
+      /free
+        svReturn = *ZEROS;
+        exec sql select dayName(:argDate)
+             into :svReturn
+             from SYSIBM/SYSDUMMY1;
+        return svReturn;
+      /end-free
+     P                 E
+      *-----------------------------------------------------------------
+      * getDateMonthName: Gets the Month Name for a Specified Date
+      *-----------------------------------------------------------------
+     P getDateMonthName...
+     P                 B                   EXPORT
+     D getDateMonthName...
+     D                 PI            20A
+     D   argDate                       D   const
+     D svReturn        s             20A
+      /free
+        svReturn = *ZEROS;
+        exec sql select monthName(:argDate)
+             into :svReturn
+             from SYSIBM/SYSDUMMY1;
+        return svReturn;
+      /end-free
+     P                 E
+      *-----------------------------------------------------------------
+      * getDateLongName: Gets the Full Long Text for a Specified Date
+      *-----------------------------------------------------------------
+     P getDateLongName...
+     P                 B                   EXPORT
+     D getDateLongName...
+     D                 PI            40A
+     D   argDate                       D   const
+     D svReturn        s             40A
+     D svDayName       s             20A
+     D svMonthName     s             20A
+     D svDayOfMonth    s              2S 0
+     D svYear          s              4S 0
+      /free
+        svReturn = *ZEROS;
+        exec sql select dayName(:argDate),
+                        monthName(:argDate),
+                        dayOfMonth(:argDate),
+                        year(:argDate)
+             into :svDayName, :svMonthName,
+                  :svDayOfMonth, :svYear
+             from SYSIBM/SYSDUMMY1;
+        svReturn = %trim(svDayName) + ', '
+                 + %trim(svMonthName) + ' '
+                 + %char(svDayOfMonth) + ', '
+                 + %char(svYear);
+        return svReturn;
+      /end-free
+     P                 E
